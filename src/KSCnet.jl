@@ -222,21 +222,21 @@ function generateSubsetW(fileIndex::Int, indicesS::Array{Int}, nodesS::Array{Int
   end
 end
 
-@everywhere function netmapU(file_dir::String, file_name, fileCount::Int)
+function netmapU(file_dir::String, file_name, fileCount::Int)
   global fileData = Array((Array{Int, 2}, Array{Float64, 2}, Array{Int, 2}), fileCount)
   @inbounds for i = 1:fileCount
     fileData[i] = mmapNetU(file_dir, file_name, i)
   end
 end
 
-@everywhere function netmapW(file_dir::String, file_name, fileCount::Int)
+function netmapW(file_dir::String, file_name, fileCount::Int)
   global fileData = Array((Array{Int, 2}, Array{Float64, 2}, Array{Int, 2}, Array{Float64, 2}), fileCount)
   @inbounds for i = 1:fileCount
     fileData[i] = mmapNetW(file_dir, file_name, i)
   end
 end
 
-@everywhere function qmap(qFile::String, minN::Int, maxN::Int)
+function qmap(qFile::String, minN::Int, maxN::Int)
   global qData
   file = open(qFile, "w+")
   qData = mmap_array(Int, (maxN-minN+1, 2), file)
