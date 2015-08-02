@@ -30,48 +30,6 @@ function modularity1(fileCount::Int, k::Int, weighted::Int)
   edgesSum = @parallel (+) for j in 1:fileCount
     sum(fileData[j][2])
   end
-  Xsum = @parallel (.+) for j in 1:fileCount
-    println("File $(j)")
-    tic()
-    X = fill(0.0, k, 2)
-    @inbounds for i in 1:k
-      println("Cluster $(i)")
-      clusterAssoc = 0.0
-      clusterDeg = 0.0
-      # node indices of file j belonging to cluster i
-      clusterNodes = find(x -> x in qData[(qData[:,2] .== i), 1], fileData[j][1])
-      @inbounds for node in clusterNodes
-        # find indices of neighbours of node also in cluster i
-        clusterNeighbours = find(x -> x in clusterNodes, fileData[j][3][:, node])
-        if length(clusterNeighbours) != 0
-          if weighted == 0
-            clusterAssoc += float(length(clusterNeighbours))
-            clusterDeg += fileData[j][2][node]
-          else
-            clusterAssoc += sum(fileData[j][4][clusterNeighbours, node])
-            clusterDeg += sum(fileData[j][4][:, node])
-          end
-        end
-      end
-      # maxtrix of the cluster association and cluster degree values of each cluster
-      X[i, :] = [clusterAssoc, clusterDeg]
-    end
-    toc()
-    X
-  end
-  Q = 0.0
-  @inbounds for i in 1:k
-    Q = Q + Xsum[i, 1]/edgesSum - (Xsum[i, 2]/edgesSum)^2
-  end
-  return Q
-end
-
-function modularity2(fileCount::Int, k::Int, weighted::Int)
-  println("Modularity metric:")
-  # total sum of weights of all edges in network
-  edgesSum = @parallel (+) for j in 1:fileCount
-    sum(fileData[j][2])
-  end
   Xsum = fill(0.0, k, 2)
   @inbounds for j in 1:fileCount
     println("File $(j)")
@@ -97,6 +55,48 @@ function modularity2(fileCount::Int, k::Int, weighted::Int)
       Xsum[i, :] .+= [X[1] X[2]]
     end
     toc()
+  end
+  Q = 0.0
+  @inbounds for i in 1:k
+    Q = Q + Xsum[i, 1]/edgesSum - (Xsum[i, 2]/edgesSum)^2
+  end
+  return Q
+end
+
+function modularity3(fileCount::Int, k::Int, weighted::Int)
+  println("Modularity metric:")
+  # total sum of weights of all edges in network
+  edgesSum = @parallel (+) for j in 1:fileCount
+    sum(fileData[j][2])
+  end
+  Xsum = @parallel (.+) for j in 1:fileCount
+    tic()
+    X = fill(0.0, k, 2)
+    @inbounds for i in 1:k
+      println("Cluster $(i) on File $(j), Processor $(myid())")
+      clusterAssoc = 0.0
+      clusterDeg = 0.0
+      # node indices of file j belonging to cluster i
+      clusterNodes = find(x -> x in qData[(qData[:,2] .== i), 1], fileData[j][1])
+      println("$(length(clusterNodes)) Nodes on Processor $(myid())")
+      @inbounds for index in clusterNodes
+        # find indices of neighbours of node also in cluster i
+        clusterNeighbours = find(x -> x in clusterNodes, fileData[j][3][:, index])
+        # cluster association and cluster degree value
+        if length(clusterNeighbours) != 0
+          if weighted == 0
+            clusterAssoc += float(length(clusterNeighbours))
+            clusterDeg += fileData[j][2][index]
+          else
+            clusterAssoc += sum(fileData[j][4][clusterNeighbours, index])
+            clusterDeg += sum(fileData[j][4][:, index])
+          end
+        end
+      end
+      X[i, :] = [clusterAssoc clusterDeg]
+    end
+    toc()
+    X
   end
   Q = 0.0
   @inbounds for i in 1:k

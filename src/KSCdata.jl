@@ -40,7 +40,7 @@ function mmapNetW(file_dir::String, file_name::String, index::Int)
 end
 
 """
-Converts the network file into sets of 4 binary files, one set each time the maxMB threshold is reached
+Converts the network file into sets of binary files, one set each time the maxMB threshold is reached
 - *nodes.bin: vector to map internal to external node index
 - *degrees.bin: vector of the node degee values
 - *neighbours.bin: square array of the neighbours of each node

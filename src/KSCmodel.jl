@@ -1,3 +1,6 @@
+"""
+Train model through eigendecomposition
+"""
 function modelTrain(trainSparse::SparseMatrixCSC{Float64, Int}, trainN::Int, maxK::Int, fulleig::Bool)
   # kernel matrix train nodes
   trainDiag = spdiagm(vec(sqrt(sum(trainSparse.^2, 2))), 0, trainN, trainN)
@@ -38,6 +41,9 @@ function modelTrain(trainSparse::SparseMatrixCSC{Float64, Int}, trainN::Int, max
   return trainNorm, λ, α, β, CB
 end
 
+"""
+Validate model through Balanced Angular Fit criterion (BAF)
+"""
 function modelValid(validSparse::SparseMatrixCSC{Float64, Int}, validN::Int, trainNorm::SparseMatrixCSC{Float64, Int}, maxK::Int, minK::Int, α::Array{Float64, 2}, β::Array{Float64, 2}, CB::Array{Array{Int, 2}})
   # kernel matrix valid nodes
   kernelValid = validSparse*trainNorm';
@@ -57,81 +63,10 @@ function modelValid(validSparse::SparseMatrixCSC{Float64, Int}, validN::Int, tra
   return baf, kBAF, indexBAF, valueBAF
 end
 
-function codebook(e::Array{Float64,2}, numk::Int)
-  eBin = int(sign(e))
-  eUniBin = unique(eBin, 1)
-  # TODO method unique does not return index vectors (JuliaLang issue #1845)
-  # current solution = nested for-loop comparison
-  eCW = Array(Int, size(eBin,1))
-  @inbounds for i in 1:size(eBin, 1)
-    @inbounds for j in 1:size(eUniBin,1)
-      if eUniBin[j,:] == eBin[i,:]
-        eCW[i] = j
-        break;
-      end
-    end
-  end
-  # calculate occurence of each codeword
-  m = size(eUniBin, 1)
-  eSizeCW = Array(Int, m)
-  @inbounds for i in 1:m
-    eSizeCW[i] = sum(eCW .== i)
-  end
-  # sort codewords by descending occurence
-  indexCW = sortperm(eSizeCW, rev=true)
-  if m < numk
-    println("Redundant codewords for $(numk) clusters")
-    return eUniBin[indexCW[1:m], :]
-  end
-  return eUniBin[indexCW[1:numk], :]
-end
-
-function membership(e::Array{Float64,2}, CB::Array{Int,2})
-  eBin = int(sign(e))
-  # Hamming distance is equal to squared Euclidean when using binary vectors
-  minValues, qVectors = findmin(dist_euclidean(eBin, CB), 2)
-  return int(ceil(qVectors ./ size(qVectors,1)))
-end
-
-function balanced_angular_fit(e::Array{Float64,2}, q::Array{Int,2})
-  eN, eK = size(e)
-  # calculate mean of each cluster
-  clustermean = zeros(eK+1, eK)
-  for i in 1:eK+1
-    # TODO mean function along dim, JuliaLang issue #2265
-    clustermean[i, :] = [mean(e[q[:] .== i, :][:,j]) for j in 1:eK]
-  end
-  clustermeanNorm = sqrt(sum(clustermean.^2, 2))
-  # angular similarity between eigenspace projections and each cluster mean
-  clusterValues = Array(Float64, eN)
-  clusterIndices = Array(Int, eN)
-  for i in 1:eN
-    clusterSim = clustermean * e[i, :]' ./ (clustermeanNorm * norm(e[i, :]));
-    maxValue, maxIndex = findmax(clusterSim, 1)
-    clusterValues[i] = maxValue[1]
-    clusterIndices[i] = maxIndex[1]
-  end
-  # cosine similarity entire cluster
-  clusterFit = Array(Float64, eK+1)
-  for i in 1:eK+1
-    indices = findin(clusterIndices, i)
-    if isempty(indices)
-      clusterFit[i] = 0.0
-    else
-      clusterFit[i] = mean(clusterValues[indices])
-    end
-  end
-  return clusterFit
-end
-
-function dist_euclidean(x::Array{Int,2}, y::Array{Int,2})
-  xDim = size(x, 1)
-  yDim = size(y, 1)
-  xSum = sum(x.*x, 2)
-  ySum = sum(y'.*y', 1)
-  return sqrt(repeat(xSum, outer=[1,yDim]) + repeat(ySum, outer=[xDim,1]) - 2*x*y')
-end
-
+"""
+Assign cluster indices to unweighted network
+Blocks of nodes in parallel
+"""
 function modelTestU(fileCount::Int, trainNorm::SparseMatrixCSC{Float64, Int}, minN::Int, maxN::Int, α::Array{Float64,2}, β::Array{Float64,2}, CB::Array{Array{Int,2}}, kBAF::Int, maxMB::Int; limitN=-1)
   lastNeighbour = maxN
   if minN == 0
@@ -206,6 +141,10 @@ function modelTestU(fileCount::Int, trainNorm::SparseMatrixCSC{Float64, Int}, mi
   println("Nodes tested $(countN)")
 end
 
+"""
+Assign cluster indices to weighted network
+Blocks of nodes in parallel
+"""
 function modelTestW(fileCount::Int, trainNorm::SparseMatrixCSC{Float64, Int}, minN::Int, maxN::Int, α::Array{Float64,2}, β::Array{Float64,2}, CB::Array{Array{Int,2}}, kBAF::Int, maxMB::Int; limitN=-1)
   lastNeighbour = maxN
   if minN == 0
@@ -284,6 +223,10 @@ function modelTestW(fileCount::Int, trainNorm::SparseMatrixCSC{Float64, Int}, mi
   println("Nodes tested $(countN)")
 end
 
+"""
+Assign cluster indices to network
+Single node in parallel -> inefficient
+"""
 function modelTestSingle(fileCount::Int, trainNorm::SparseMatrixCSC{Float64, Int}, minN::Int, maxN::Int, α::Array{Float64,2}, β::Array{Float64,2}, CB::Array{Array{Int,2}}, k::Int)
   lastNeighbour = maxN
   if minN == 0
@@ -326,4 +269,82 @@ function modelTestSingle(fileCount::Int, trainNorm::SparseMatrixCSC{Float64, Int
     1
   end
   println("Nodes tested $(countN)")
+end
+
+"""
+Helper functions
+"""
+function codebook(e::Array{Float64,2}, numk::Int)
+  eBin = int(sign(e))
+  eUniBin = unique(eBin, 1)
+  # TODO method unique does not return index vectors (JuliaLang issue #1845)
+  # current solution = nested for-loop comparison
+  eCW = Array(Int, size(eBin,1))
+  @inbounds for i in 1:size(eBin, 1)
+    @inbounds for j in 1:size(eUniBin,1)
+      if eUniBin[j,:] == eBin[i,:]
+        eCW[i] = j
+        break;
+      end
+    end
+  end
+  # calculate occurence of each codeword
+  m = size(eUniBin, 1)
+  eSizeCW = Array(Int, m)
+  @inbounds for i in 1:m
+    eSizeCW[i] = sum(eCW .== i)
+  end
+  # sort codewords by descending occurence
+  indexCW = sortperm(eSizeCW, rev=true)
+  if m < numk
+    println("Redundant codewords for $(numk) clusters")
+    return eUniBin[indexCW[1:m], :]
+  end
+  return eUniBin[indexCW[1:numk], :]
+end
+
+function membership(e::Array{Float64,2}, CB::Array{Int,2})
+  eBin = int(sign(e))
+  # Hamming distance is equal to squared Euclidean when using binary vectors
+  minValues, qVectors = findmin(dist_euclidean(eBin, CB), 2)
+  return int(ceil(qVectors ./ size(qVectors,1)))
+end
+
+function balanced_angular_fit(e::Array{Float64,2}, q::Array{Int,2})
+  eN, eK = size(e)
+  # calculate mean of each cluster
+  clustermean = zeros(eK+1, eK)
+  for i in 1:eK+1
+    # TODO mean function along dim, JuliaLang issue #2265
+    clustermean[i, :] = [mean(e[q[:] .== i, :][:,j]) for j in 1:eK]
+  end
+  clustermeanNorm = sqrt(sum(clustermean.^2, 2))
+  # angular similarity between eigenspace projections and each cluster mean
+  clusterValues = Array(Float64, eN)
+  clusterIndices = Array(Int, eN)
+  for i in 1:eN
+    clusterSim = clustermean * e[i, :]' ./ (clustermeanNorm * norm(e[i, :]));
+    maxValue, maxIndex = findmax(clusterSim, 1)
+    clusterValues[i] = maxValue[1]
+    clusterIndices[i] = maxIndex[1]
+  end
+  # cosine similarity entire cluster
+  clusterFit = Array(Float64, eK+1)
+  for i in 1:eK+1
+    indices = findin(clusterIndices, i)
+    if isempty(indices)
+      clusterFit[i] = 0.0
+    else
+      clusterFit[i] = mean(clusterValues[indices])
+    end
+  end
+  return clusterFit
+end
+
+function dist_euclidean(x::Array{Int,2}, y::Array{Int,2})
+  xDim = size(x, 1)
+  yDim = size(y, 1)
+  xSum = sum(x.*x, 2)
+  ySum = sum(y'.*y', 1)
+  return sqrt(repeat(xSum, outer=[1,yDim]) + repeat(ySum, outer=[xDim,1]) - 2*x*y')
 end

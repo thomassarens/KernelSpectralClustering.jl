@@ -1,3 +1,8 @@
+"""
+Training and Validation subset selection through either:
+- Fast and Unique Representative Subset selection
+- Random Representative Subset selection
+"""
 function selectSubset(method::String, fileIndex::Int, trainSize::Int, validSize::Int, degreeThreshold::Float64)
   if method == "furs"
     sortedNodeIndices = sortIndicesDegree(fileData[fileIndex][2], degreeThreshold)
@@ -17,8 +22,8 @@ function selectSubset(method::String, fileIndex::Int, trainSize::Int, validSize:
 end
 
 """
-Fast and unique representative subset selection
-Return array of node indices selected by FURS and boolean value (true if FURS completely selected the requested sampleSize)
+Fast and Unique Representative Subset selection (FURS)
+Return array of selected node indices and boolean value (true if equal to requested sampleSize)
 """
 function furs(fileIndex::Int, sampleSize::Int, sortedNodeIndices::Vector{Int})
   selectedSize = 0
@@ -68,7 +73,7 @@ end
 
 """
 Random representative subset selection
-Return array of randomly selected node indices and boolean value (true if FURS completely selected the requested sampleSize)
+Return array of randomly selected node indices and boolean value (true if equal to requested sampleSize)
 """
 function randrs(sampleSize::Int, nodeIndices::Vector{Int})
   selectedSize = 0
@@ -85,6 +90,9 @@ function randrs(sampleSize::Int, nodeIndices::Vector{Int})
   return (selectedSubset, true)
 end
 
+"""
+Node index sorting functions
+"""
 function sortIndicesDegree(degreeArray::Array{Float64, 2}, threshold::Float64)
   # remove all node indices with degree lower than threshold
   nodeIndices = find(x -> x >= threshold, degreeArray)
