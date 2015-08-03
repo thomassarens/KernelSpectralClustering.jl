@@ -10,7 +10,7 @@ include("KSCbignet.jl")
 
 export runKSCnetwork, rerunKSCnetwork
 export kscnet, kscbignet
-export coverage, modularity1, modularity3
+export coverage, modularity
 export convertDSVNet, createMirrored
 
 function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::Int; sizeMB=4000::Int, eval=false::Bool)
@@ -31,7 +31,7 @@ function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::In
       write(metricsfile, "Coverage: value $(coverageM), time $(timeCoverage)s\n")
       # Modularity
       tic()
-      modularityM = modularity3(numFiles, k, fileWeighted)
+      modularityM = modularity(numFiles, k, fileWeighted)
       timeModularity = toq()
       println("Modularity $(modularityM) finished, time elapsed $(timeModularity)s")
       write(metricsfile, "Modularity: value $(modularityM), time $(timeModularity)s\n")
@@ -63,7 +63,7 @@ function rerunKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::
       write(metricsfile, "Coverage: value $(coverageM), time $(timeCoverage)s\n")
       # Modularity
       tic()
-      modularityM = modularity3(numFiles, k, fileWeighted)
+      modularityM = modularity(numFiles, k, fileWeighted)
       timeModularity = toq()
       println("Modularity $(modularityM) finished, time elapsed $(timeModularity)s")
       write(metricsfile, "Modularity: value $(modularityM), time $(timeModularity)s\n")

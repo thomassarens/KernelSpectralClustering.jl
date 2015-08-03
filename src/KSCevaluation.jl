@@ -24,6 +24,73 @@ end
 """
 Clustering quality metrics
 """
+function modularity(fileCount::Int, k::Int, weighted::Int)
+  println("Modularity metric:")
+  clusterResult = fill(0.0, k, 2)
+  @inbounds for i in 1:k
+    println("Cluster $(i)")
+    # nodes belonging to cluster i
+    clusterNodes = qData[(qData[:,2] .== i), 1]
+    println("Cluster size $(length(clusterNodes))")
+    clusterValues = @parallel (.+) for node in clusterNodes
+      clusterAssoc = 0.0
+      clusterDeg = 0.0
+      foundNeighbours = Int[]
+      foundClusterNeighbours = Int[]
+      @inbounds for j in 1:fileCount
+        indexNode = findfirst(fileData[j][1], node)
+        if indexNode != 0
+          # degree of new node neighbours
+          nodeNeighbours = find(x -> x ∉ foundNeighbours, fileData[j][3][:, indexNode])
+          if length(nodeNeighbours) != 0
+            push!(foundNeighbours, fileData[j][3][nodeNeighbours, indexNode]...)
+            # if unweighted
+            if weighted == 0
+              clusterDeg += float(length(nodeNeighbours))
+            else
+              clusterDeg += sum(fileData[j][4][nodeNeighbours, indexNode])
+            end
+          end
+          # degree of new node cluster neighbours
+          nodeNeighbours = find(x -> x ∉ foundClusterNeighbours, fileData[j][3][:, indexNode])
+          clusterNeighbours = find(x -> x in clusterNodes, fileData[j][3][nodeNeighbours, indexNode])
+          if length(clusterNeighbours) != 0
+            push!(foundClusterNeighbours, fileData[j][3][nodeNeighbours, indexNode][clusterNeighbours]...)
+            # if unweighted
+            if weighted == 0
+              clusterAssoc += float(length(clusterNeighbours))
+            else
+              clusterAssoc += sum(fileData[j][4][nodeNeighbours, indexNode][clusterNeighbours])
+            end
+          end
+        end
+      end
+      # end parallel loop
+      [clusterAssoc, clusterDeg]
+    end
+    clusterResult[i, :] = clusterValues
+  end
+  # total sum of weights of all edges in network
+  edgesSum = sum(clusterResult[:, 2])
+  Q = 0.0
+  @inbounds for i in 1:k
+    Q += clusterResult[i, 1]/edgesSum - (clusterResult[i, 2]/edgesSum)^2
+  end
+  return Q
+end
+
+
+function cut_conductance(fileCount::Int, qtest::Array{Int, 2})
+  volumeG, volumeS = @parallel (+) for j in 1:fileCount
+    #sumS = fileData[j][1]
+    #sumG = sum(fileData[j][2])
+    d = sum(fileData[j][2], 2)
+    d, 0.0
+  end
+  return volumeG
+end
+
+#=
 function modularity1(fileCount::Int, k::Int, weighted::Int)
   println("Modularity metric:")
   # total sum of weights of all edges in network
@@ -104,13 +171,4 @@ function modularity3(fileCount::Int, k::Int, weighted::Int)
   end
   return Q
 end
-
-function cut_conductance(fileCount::Int, qtest::Array{Int, 2})
-  volumeG, volumeS = @parallel (+) for j in 1:fileCount
-    #sumS = fileData[j][1]
-    #sumG = sum(fileData[j][2])
-    d = sum(fileData[j][2], 2)
-    d, 0.0
-  end
-  return volumeG
-end
+=#

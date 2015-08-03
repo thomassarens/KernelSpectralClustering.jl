@@ -90,10 +90,10 @@ function kscbignet(network_file::String, file_dir::String, file_name::String, de
   end
   timeSubset = toq()
   println("Subset selection step finished, time elapsed $(timeSubset)s")
-  write(resultfile, "Subset selection step: time $(timeSubset)s\n")
   # TODO: store to file?
   trainSubset = unique(trainNodes)
   validSubset = unique(validNodes)
+  write(resultfile, "Subset selection step: sizeT $(length(trainSubset)), sizeV $(length(validSubset)), time $(timeSubset)s\n")
   # change node indices to be sequential to avoid zeros in matrix representation
   permIndices = trainSubset
   trainN = length(permIndices)
