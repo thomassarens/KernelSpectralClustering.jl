@@ -63,7 +63,7 @@ function rerunKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::
       write(metricsfile, "Coverage: value $(coverageM), time $(timeCoverage)s\n")
       # Modularity
       tic()
-      modularityM = modularity3(fileCount, kBAF, fileWeighted)
+      modularityM = modularity3(numFiles, k, fileWeighted)
       timeModularity = toq()
       println("Modularity $(modularityM) finished, time elapsed $(timeModularity)s")
       write(metricsfile, "Modularity: value $(modularityM), time $(timeModularity)s\n")
