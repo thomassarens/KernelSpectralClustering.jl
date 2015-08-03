@@ -1,7 +1,7 @@
 """
 Subset quality metrics
 """
-function coverage(fileCount::Int, subset::Array{Int}, maxN::Int)
+function coverage(fileCount::Int, subset::Array{Int}, totalN::Int)
   reachableNeighbours = @parallel (vcat) for i in subset
     tempNeighbours = Array(Array{Int},0)
     for j in 1:fileCount
@@ -17,7 +17,7 @@ function coverage(fileCount::Int, subset::Array{Int}, maxN::Int)
     end
     tempNeighbours = vcat(tempNeighbours...)
   end
-  C = length(unique(reachableNeighbours))/maxN
+  C = length(unique(reachableNeighbours))/totalN
   return C
 end
 

@@ -25,7 +25,7 @@ function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::In
       metricsfile = open("$(filedir)/$(filename)/metricsKSC.txt", "w")
       # Coverage
       tic()
-      coverageM = coverage(numFiles, trainSubset, lastNode)
+      coverageM = coverage(numFiles, trainSubset, length(unique(qTest)))
       timeCoverage = toq()
       println("Coverage $(coverageM) finished, time elapsed $(timeCoverage)s")
       write(metricsfile, "Coverage: value $(coverageM), time $(timeCoverage)s\n")
@@ -57,7 +57,7 @@ function rerunKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::
       metricsfile = open("$(filedir)/$(filename)/metricsKSC.txt", "w")
       # Coverage
       tic()
-      coverageM = coverage(numFiles, trainSubset, lastNode)
+      coverageM = coverage(numFiles, trainSubset, length(unique(qTest)))
       timeCoverage = toq()
       println("Coverage $(coverageM) finished, time elapsed $(timeCoverage)s")
       write(metricsfile, "Coverage: value $(coverageM), time $(timeCoverage)s\n")
