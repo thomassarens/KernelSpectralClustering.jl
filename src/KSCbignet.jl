@@ -1,7 +1,7 @@
 """
 Memory-Mapped implementation of Kernel Spectral Clustering
 """
-function kscbignet(network_file::String, file_dir::String, file_name::String, delimiter::Char, maxMB::Int; fraction=0.15::Float64, method="furs"::String, minK=2::Int, maxK=100::Int, eigfull=false::Bool, metrics=false::Bool, convertF=true::Bool)
+function kscbignet(network_file::String, file_dir::String, file_name::String, delimiter::Char, maxMB::Int; fraction=0.15::Float64, method="furs"::String, minK=2::Int, maxK=100::Int, eigfull=false::Bool, convertF=true::Bool)
   if minK < 2 || minK > maxK
     error("minK must be at least 2 and smaller than maxK")
   end
@@ -152,23 +152,7 @@ function kscbignet(network_file::String, file_dir::String, file_name::String, de
   println("Test phase finished, time elapsed $(timeTest)s")
   write(resultfile, "Test phase: time $(timeTest)s\n")
   close(resultfile)
-  if metrics
-    metricsfile = open("$(file_dir)/$(file_name)/metricsKSC.txt", "w")
-    println("Evaluation step")
-    tic()
-    coverageM = coverage(fileCount, trainSubset, lastNode)
-    timeCoverage = toq()
-    println("Coverage finished, time elapsed $(timeCoverage)s")
-    write(metricsfile, "Coverage: value $(coverageM), time $(timeCoverage)s\n")
-    tic()
-    modularityM = modularity3(fileCount, kBAF, fileWeighted)
-    timeModularity = toq()
-    println("Modularity finished, time elapsed $(timeModularity)s")
-    write(metricsfile, "Modularity: value $(modularityM), time $(timeModularity)s\n")
-    close(metricsfile)
-    return qData, baf, kBAF, length(trainSubset), coverageM, modularityM
-  end
-  return qData, baf, kBAF, length(trainSubset), fileData, fileCount
+  return qData, baf, kBAF, firstNode, lastNode, trainSubset, fileCount, fileWeighted
 end
 
 function subsetCombineU(x::Tuple, y::Tuple)

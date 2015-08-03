@@ -73,7 +73,7 @@ function modularity3(fileCount::Int, k::Int, weighted::Int)
     tic()
     X = fill(0.0, k, 2)
     @inbounds for i in 1:k
-      println("Cluster $(i) on File $(j), Processor $(myid())")
+      println("Cluster $(i) on File $(j)")
       clusterAssoc = 0.0
       clusterDeg = 0.0
       # node indices of file j belonging to cluster i

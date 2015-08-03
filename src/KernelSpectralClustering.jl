@@ -10,25 +10,54 @@ include("KSCbignet.jl")
 
 export runKSCnetwork, rerunKSCnetwork
 export kscnet, kscbignet
-export createMirrored
+export coverage, modularity1, modularity3
+export convertDSVNet, createMirrored
+
+  if metrics
+    metricsfile = open("$(file_dir)/$(file_name)/metricsKSC.txt", "w")
+    println("Evaluation step")
+    tic()
+    coverageM = coverage(fileCount, trainSubset, lastNode)
+    timeCoverage = toq()
+    println("Coverage finished, time elapsed $(timeCoverage)s")
+    write(metricsfile, "Coverage: value $(coverageM), time $(timeCoverage)s\n")
+    tic()
+    modularityM = modularity3(fileCount, kBAF, fileWeighted)
+    timeModularity = toq()
+    println("Modularity finished, time elapsed $(timeModularity)s")
+    write(metricsfile, "Modularity: value $(modularityM), time $(timeModularity)s\n")
+    close(metricsfile)
+    return qData, baf, kBAF, length(trainSubset), coverageM, modularityM
+  end
 
 function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::Int; sizeMB=4000::Int, eval=false::Bool)
   filedir = dirname(networkfile)
   filename = splitext(basename(networkfile))[1]
   if sizeMB > 0
     # kscbignet algo
+    qTest, baf, k, firstNode, lastNode, trainSubset, numFiles, fileWeighted = @time kscbignet(networkfile, filedir, filename, delimiter, sizeMB; fraction=0.15, method="furs", minK=mink, maxK=maxk, eigfull=false, convertF=true)
+    println("$(numFiles) files with training subset size $(length(trainSubset)) and BAF value $(baf[k-mink+1]) for $(k) clusters")
     if eval
-      qTest, baf, k, sizeSubset, coverageM, modularityM = @time kscbignet(networkfile, filedir, filename, delimiter, sizeMB; fraction=0.15, method="furs", minK=mink, maxK=maxk, eigfull=false, metrics=true, convertF=true)
-      println("Coverage $(coverageM) for $(sizeSubset) nodes, Modularity $(modularityM) and BAF $(baf[k-mink+1]) for $(k) clusters")
-      return qTest, baf, k, coverageM, modularityM
-    else
-      qTest, baf, k, sizeSubset, networkData, numFiles = @time kscbignet(networkfile, filedir, filename, delimiter, sizeMB; fraction=0.15, method="furs", minK=mink, maxK=maxk, eigfull=false, metrics=false, convertF=true)
-      println("$(numFiles) files with training subset size $(sizeSubset) and BAF value $(baf[k-mink+1]) for $(k) clusters")
-      return qTest, baf, k, sizeSubset, networkData, numFiles
+      println("Evaluation step")
+      metricsfile = open("$(filedir)/$(filename)/metricsKSC.txt", "w")
+      # Coverage
+      tic()
+      coverageM = coverage(numFiles, trainSubset, lastNode)
+      timeCoverage = toq()
+      println("Coverage $(coverageM) finished, time elapsed $(timeCoverage)s")
+      write(metricsfile, "Coverage: value $(coverageM), time $(timeCoverage)s\n")
+      # Modularity
+      tic()
+      modularityM = modularity3(fileCount, kBAF, fileWeighted)
+      timeModularity = toq()
+      println("Modularity $(modularityM) finished, time elapsed $(timeModularity)s")
+      write(metricsfile, "Modularity: value $(modularityM), time $(timeModularity)s\n")
+      close(metricsfile)
     end
+    return qTest, baf, k, firstNode, lastNode, trainSubset, numFiles, fileWeighted
   else
     # kscnet algo
-    result = @time kscnet(networkfile, filedir, filename, delimiter; fraction=0.15, method="furs", minK=mink, maxK=maxk, eigfull=false, metrics=false)
+    result = @time kscnet(networkfile, filedir, filename, delimiter; fraction=0.15, method="furs", minK=mink, maxK=maxk, eigfull=false)
     return result
   end
 end
@@ -38,18 +67,29 @@ function rerunKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::
   filename = splitext(basename(networkfile))[1]
   if sizeMB > 0
     # kscbignet algo
+    qTest, baf, k, firstNode, lastNode, trainSubset, numFiles, fileWeighted = @time kscbignet(networkfile, filedir, filename, delimiter, sizeMB; fraction=0.15, method="furs", minK=mink, maxK=maxk, eigfull=false, convertF=false)
+    println("KSCbignet: $(numFiles) files with training subset size $(length(trainSubset)) and BAF value $(baf[k-mink+1]) for $(k) clusters")
     if eval
-      qTest, baf, k, sizeSubset, coverageM, modularityM = @time kscbignet(networkfile, filedir, filename, delimiter, sizeMB; fraction=0.15, method="furs", minK=mink, maxK=maxk, eigfull=false, metrics=true, convertF=false)
-      println("Coverage $(coverageM) for $(sizeSubset) nodes, Modularity $(modularityM) and BAF $(baf[k-mink+1]) for $(k) clusters")
-      return qTest, baf, k, coverageM, modularityM
-    else
-      qTest, baf, k, sizeSubset, networkData, numFiles = @time kscbignet(networkfile, filedir, filename, delimiter, sizeMB; fraction=0.15, method="furs", minK=mink, maxK=maxk, eigfull=false, metrics=false, convertF=false)
-      println("$(numFiles) files with training subset size $(sizeSubset) and BAF value $(baf[k-mink+1]) for $(k) clusters")
-      return qTest, baf, k, sizeSubset, networkData, numFiles
+      println("Evaluation step")
+      metricsfile = open("$(filedir)/$(filename)/metricsKSC.txt", "w")
+      # Coverage
+      tic()
+      coverageM = coverage(numFiles, trainSubset, lastNode)
+      timeCoverage = toq()
+      println("Coverage $(coverageM) finished, time elapsed $(timeCoverage)s")
+      write(metricsfile, "Coverage: value $(coverageM), time $(timeCoverage)s\n")
+      # Modularity
+      tic()
+      modularityM = modularity3(fileCount, kBAF, fileWeighted)
+      timeModularity = toq()
+      println("Modularity $(modularityM) finished, time elapsed $(timeModularity)s")
+      write(metricsfile, "Modularity: value $(modularityM), time $(timeModularity)s\n")
+      close(metricsfile)
     end
+    return qTest, baf, k, firstNode, lastNode, trainSubset, numFiles, fileWeighted
   else
     # kscnet algo
-    result = @time kscnet(networkfile, filedir, filename, delimiter; fraction=0.15, method="furs", minK=mink, maxK=maxk, eigfull=false, metrics=false)
+    result = @time kscnet(networkfile, filedir, filename, delimiter; fraction=0.15, method="furs", minK=mink, maxK=maxk, eigfull=false)
     return result
   end
 end
