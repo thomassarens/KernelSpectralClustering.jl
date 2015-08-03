@@ -13,23 +13,6 @@ export kscnet, kscbignet
 export coverage, modularity1, modularity3
 export convertDSVNet, createMirrored
 
-  if metrics
-    metricsfile = open("$(file_dir)/$(file_name)/metricsKSC.txt", "w")
-    println("Evaluation step")
-    tic()
-    coverageM = coverage(fileCount, trainSubset, lastNode)
-    timeCoverage = toq()
-    println("Coverage finished, time elapsed $(timeCoverage)s")
-    write(metricsfile, "Coverage: value $(coverageM), time $(timeCoverage)s\n")
-    tic()
-    modularityM = modularity3(fileCount, kBAF, fileWeighted)
-    timeModularity = toq()
-    println("Modularity finished, time elapsed $(timeModularity)s")
-    write(metricsfile, "Modularity: value $(modularityM), time $(timeModularity)s\n")
-    close(metricsfile)
-    return qData, baf, kBAF, length(trainSubset), coverageM, modularityM
-  end
-
 function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::Int; sizeMB=4000::Int, eval=false::Bool)
   filedir = dirname(networkfile)
   filename = splitext(basename(networkfile))[1]
