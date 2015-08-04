@@ -1,7 +1,7 @@
 """
 Train model through eigendecomposition
 """
-function modelTrain(trainSparse::SparseMatrixCSC{Float64, Int}, trainN::Int, maxK::Int, fulleig::Bool)
+function modelTrain(trainSparse::SparseMatrixCSC{Float64, Int}, trainN::Int, maxK::Int, decomp::String)
   # kernel matrix train nodes
   trainDiag = spdiagm(vec(sqrt(sum(trainSparse.^2, 2))), 0, trainN, trainN)
   trainNorm = \(trainDiag, trainSparse)
@@ -13,11 +13,18 @@ function modelTrain(trainSparse::SparseMatrixCSC{Float64, Int}, trainN::Int, max
   # centering matrix
   centerMatrix = eye(trainN) - ones(trainN, 1) * inverseD' / sum(inverseD)
   # eigendecomposition
-  if fulleig
-    λ,α = eig(inverseDsparse * centerMatrix * kernelTrain)
-  else
+  if decomp == "svd"
+    # svd support for sparse matrices in version 0.4
+    # use svds() with economy size
+    error("modelTrain: svd not yet available.")
+  elseif decomp == "eigs"
     # Lanczos method
     λ,α = eigs(inverseDsparse * centerMatrix * kernelTrain, nev=maxK+4, which=:LM)
+  elseif decomp == "eig"
+    # full eigendecomposition
+    λ,α = eig(inverseDsparse * centerMatrix * kernelTrain)
+  else
+    error("modelTrain: wrong decomp argument.")
   end
   λ = real(λ)
   λ[isnan(λ)] = 0.0

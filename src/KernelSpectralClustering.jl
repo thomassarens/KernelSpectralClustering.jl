@@ -18,7 +18,7 @@ function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::In
   filename = splitext(basename(networkfile))[1]
   if sizeMB > 0
     # kscbignet algo
-    qTest, baf, k, firstNode, lastNode, trainSubset, numFiles, fileWeighted = @time kscbignet(networkfile, filedir, filename, delimiter, sizeMB; fraction=0.15, method="furs", minK=mink, maxK=maxk, eigfull=false, convertF=true)
+    qTest, baf, k, firstNode, lastNode, trainSubset, numFiles, fileWeighted = @time kscbignet(networkfile, filedir, filename, delimiter, sizeMB; fraction=0.15, method="furs", decomp="eigs", minK=mink, maxK=maxk, convertF=true)
     println("$(numFiles) files with training subset size $(length(trainSubset)) and BAF value $(baf[k-mink+1]) for $(k) clusters")
     if eval
       println("Evaluation step")
@@ -40,7 +40,7 @@ function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::In
     return qTest, baf, k, firstNode, lastNode, trainSubset, numFiles, fileWeighted
   else
     # kscnet algo
-    result = @time kscnet(networkfile, filedir, filename, delimiter; fraction=0.15, method="furs", minK=mink, maxK=maxk, eigfull=false)
+    result = @time kscnet()
     return result
   end
 end
@@ -50,7 +50,7 @@ function rerunKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::
   filename = splitext(basename(networkfile))[1]
   if sizeMB > 0
     # kscbignet algo
-    qTest, baf, k, firstNode, lastNode, trainSubset, numFiles, fileWeighted = @time kscbignet(networkfile, filedir, filename, delimiter, sizeMB; fraction=0.15, method="furs", minK=mink, maxK=maxk, eigfull=false, convertF=false)
+    qTest, baf, k, firstNode, lastNode, trainSubset, numFiles, fileWeighted = @time kscbignet(networkfile, filedir, filename, delimiter, sizeMB; fraction=0.15, method="furs", decomp="eigs", minK=mink, maxK=maxk, convertF=false)
     println("KSCbignet: $(numFiles) files with training subset size $(length(trainSubset)) and BAF value $(baf[k-mink+1]) for $(k) clusters")
     if eval
       println("Evaluation step")
@@ -72,7 +72,7 @@ function rerunKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::
     return qTest, baf, k, firstNode, lastNode, trainSubset, numFiles, fileWeighted
   else
     # kscnet algo
-    result = @time kscnet(networkfile, filedir, filename, delimiter; fraction=0.15, method="furs", minK=mink, maxK=maxk, eigfull=false)
+    result = @time kscnet()
     return result
   end
 end

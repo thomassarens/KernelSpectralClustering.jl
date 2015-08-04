@@ -1,7 +1,7 @@
 """
 Memory-Mapped implementation of Kernel Spectral Clustering
 """
-function kscbignet(network_file::String, file_dir::String, file_name::String, delimiter::Char, maxMB::Int; fraction=0.15::Float64, method="furs"::String, minK=2::Int, maxK=100::Int, eigfull=false::Bool, convertF=true::Bool)
+function kscbignet(network_file::String, file_dir::String, file_name::String, delimiter::Char, maxMB::Int; fraction=0.15::Float64, method="furs"::String, decomp="svd"::String, minK=2::Int, maxK=100::Int, convertF=true::Bool)
   if minK < 2 || minK > maxK
     error("minK must be at least 2 and smaller than maxK")
   end
@@ -123,7 +123,7 @@ function kscbignet(network_file::String, file_dir::String, file_name::String, de
   else
     modelSparse = sparse(trainNodes, trainNeighbours, trainWeights, trainN, lastNeighbour)
   end
-  trainNorm, λ, α, β, CB = modelTrain(modelSparse, trainN, maxK, eigfull)
+  trainNorm, λ, α, β, CB = modelTrain(modelSparse, trainN, maxK, decomp)
   timeTrain = toq()
   println("Training phase finished, time elapsed $(timeTrain)s")
   write(resultfile, "Training phase: time $(timeTrain)s\n")

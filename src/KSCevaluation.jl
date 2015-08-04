@@ -29,6 +29,7 @@ function modularity(fileCount::Int, k::Int, weighted::Int)
   clusterResult = fill(0.0, k, 2)
   @inbounds for i in 1:k
     println("Cluster $(i)")
+    tic()
     # nodes belonging to cluster i
     clusterNodes = qData[(qData[:,2] .== i), 1]
     println("Cluster size $(length(clusterNodes))")
@@ -69,6 +70,7 @@ function modularity(fileCount::Int, k::Int, weighted::Int)
       [clusterAssoc, clusterDeg]
     end
     clusterResult[i, :] = clusterValues
+    toc()
   end
   # total sum of weights of all edges in network
   edgesSum = sum(clusterResult[:, 2])
