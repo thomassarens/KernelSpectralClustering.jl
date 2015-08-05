@@ -34,7 +34,6 @@ function modularity(fileCount::Int, k::Int, weighted::Int)
     clusterNodes = qData[(qData[:,2] .== i), 1]
     println("Cluster size $(length(clusterNodes))")
     clusterValues = @parallel (.+) for node in clusterNodes
-      tic()
       clusterAssoc = 0.0
       clusterDeg = 0.0
       foundNeighbours = Int[]
@@ -68,7 +67,6 @@ function modularity(fileCount::Int, k::Int, weighted::Int)
         end
       end
       # end parallel loop
-      toc()
       [clusterAssoc, clusterDeg]
     end
     clusterResult[i, :] = clusterValues
@@ -83,12 +81,7 @@ function modularity(fileCount::Int, k::Int, weighted::Int)
   return Q
 end
 
-
-function cut_conductance(fileCount::Int)
-end
-
-#=
-function modularity1(fileCount::Int, k::Int, weighted::Int)
+function modularityApprox(fileCount::Int, k::Int, weighted::Int)
   println("Modularity metric:")
   # total sum of weights of all edges in network
   edgesSum = @parallel (+) for j in 1:fileCount
@@ -127,45 +120,5 @@ function modularity1(fileCount::Int, k::Int, weighted::Int)
   return Q
 end
 
-function modularity3(fileCount::Int, k::Int, weighted::Int)
-  println("Modularity metric:")
-  # total sum of weights of all edges in network
-  edgesSum = @parallel (+) for j in 1:fileCount
-    sum(fileData[j][2])
-  end
-  Xsum = @parallel (.+) for j in 1:fileCount
-    tic()
-    X = fill(0.0, k, 2)
-    @inbounds for i in 1:k
-      println("Cluster $(i) on File $(j)")
-      clusterAssoc = 0.0
-      clusterDeg = 0.0
-      # node indices of file j belonging to cluster i
-      clusterNodes = find(x -> x in qData[(qData[:,2] .== i), 1], fileData[j][1])
-      println("$(length(clusterNodes)) Nodes on Processor $(myid())")
-      @inbounds for index in clusterNodes
-        # find indices of neighbours of node also in cluster i
-        clusterNeighbours = find(x -> x in clusterNodes, fileData[j][3][:, index])
-        # cluster association and cluster degree value
-        if length(clusterNeighbours) != 0
-          if weighted == 0
-            clusterAssoc += float(length(clusterNeighbours))
-            clusterDeg += fileData[j][2][index]
-          else
-            clusterAssoc += sum(fileData[j][4][clusterNeighbours, index])
-            clusterDeg += sum(fileData[j][4][:, index])
-          end
-        end
-      end
-      X[i, :] = [clusterAssoc clusterDeg]
-    end
-    toc()
-    X
-  end
-  Q = 0.0
-  @inbounds for i in 1:k
-    Q = Q + Xsum[i, 1]/edgesSum - (Xsum[i, 2]/edgesSum)^2
-  end
-  return Q
+function cut_conductance(fileCount::Int)
 end
-=#

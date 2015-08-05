@@ -1,7 +1,7 @@
 """
 Memory-Mapped implementation of Kernel Spectral Clustering
 """
-function kscbignet(network_file::String, file_dir::String, file_name::String, delimiter::Char, maxMB::Int; fraction=0.15::Float64, method="furs"::String, decomp="svd"::String, minK=2::Int, maxK=100::Int, convertF=true::Bool)
+function kscbignet(network_file::String, file_dir::String, file_name::String, delimiter::Char, maxMB::Int; fraction=0.15::Float64, method="furs"::String, decomp="eigs"::String, minK=2::Int, maxK=100::Int, convertF=true::Bool)
   if minK < 2 || minK > maxK
     error("minK must be at least 2 and smaller than maxK")
   end
