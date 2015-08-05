@@ -34,6 +34,7 @@ function modularity(fileCount::Int, k::Int, weighted::Int)
     clusterNodes = qData[(qData[:,2] .== i), 1]
     println("Cluster size $(length(clusterNodes))")
     clusterValues = @parallel (.+) for node in clusterNodes
+      tic()
       clusterAssoc = 0.0
       clusterDeg = 0.0
       foundNeighbours = Int[]
@@ -67,6 +68,7 @@ function modularity(fileCount::Int, k::Int, weighted::Int)
         end
       end
       # end parallel loop
+      toc()
       [clusterAssoc, clusterDeg]
     end
     clusterResult[i, :] = clusterValues
@@ -82,14 +84,7 @@ function modularity(fileCount::Int, k::Int, weighted::Int)
 end
 
 
-function cut_conductance(fileCount::Int, qtest::Array{Int, 2})
-  volumeG, volumeS = @parallel (+) for j in 1:fileCount
-    #sumS = fileData[j][1]
-    #sumG = sum(fileData[j][2])
-    d = sum(fileData[j][2], 2)
-    d, 0.0
-  end
-  return volumeG
+function cut_conductance(fileCount::Int)
 end
 
 #=
