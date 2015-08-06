@@ -10,7 +10,7 @@ function kscbignet(network_file::String, file_dir::String, file_name::String, de
   end
   resultfile = open("$(file_dir)/$(file_name)/resultKSC.txt", "w")
   if convertF
-    println("File Conversion")
+    println("File Conversion $(network_file)")
     tic()
     fileCount, firstNode, lastNode, fileWeighted = convertDSVNet(network_file, file_dir, file_name, delimiter, maxMB)
     timeConversion = toq()

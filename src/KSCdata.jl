@@ -157,7 +157,7 @@ function convertDSVunweighted(fstream::IOStream, file_dir::String, file_name::St
     firstNode = min(firstNode, node, neighbour)
     lastNode = max(lastNode, node, neighbour)
     totalNodes, maxNeighbours = updateData!(data, node, neighbour, totalNodes, maxNeighbours)
-    totalNodes, maxNeighbours = updateData!(data, neighbour, node, totalNodes, maxNeighbours)
+    #totalNodes, maxNeighbours = updateData!(data, neighbour, node, totalNodes, maxNeighbours)
     # check if no more data or size is greater than bound
     if eof(fstream) || checkMemSize(data, maxMB, totalNodes, maxNeighbours)
       fileCount += 1
@@ -269,7 +269,7 @@ function createMirrored(dsvFile::String, delim::Char, newFile::String)
       if length(sline) == 2
         node = int(sline[1])
         neighbour = int(sline[2])
-        write(nstream, line)
+        write(nstream, "$(node)$(delim)$(neighbour)\n")
         write(nstream, "$(neighbour)$(delim)$(node)\n")
       elseif length(sline) == 3
         node = int(sline[1])

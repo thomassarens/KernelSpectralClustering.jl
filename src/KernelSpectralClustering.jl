@@ -13,9 +13,13 @@ export kscnet, kscbignet
 export coverage, modularity, modularityApprox
 export convertDSVNet, createMirrored
 
-function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::Int; sizeMB=4000::Int, eval=false::Bool)
+function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::Int; sizeMB=4000::Int, undirected=true::Bool, eval=false::Bool)
   filedir = dirname(networkfile)
   filename = splitext(basename(networkfile))[1]
+  if !undirected
+    createMirrored(networkfile, delimiter, "$(filedir)/$(filename)_mirror.txt")
+    networkfile = "$(filedir)/$(filename)_mirror.txt"
+  end
   if sizeMB > 0
     # kscbignet algo
     qTest, baf, k, firstNode, lastNode, trainSubset, numFiles, fileWeighted = @time kscbignet(networkfile, filedir, filename, delimiter, sizeMB; fraction=0.15, method="furs", decomp="eigs", minK=mink, maxK=maxk, convertF=true)
@@ -45,9 +49,13 @@ function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::In
   end
 end
 
-function rerunKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::Int; sizeMB=4000::Int, eval=false::Bool)
+function rerunKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::Int; sizeMB=4000::Int, undirected=true::Bool, eval=false::Bool)
   filedir = dirname(networkfile)
   filename = splitext(basename(networkfile))[1]
+  if !undirected
+    createMirrored(networkfile, delimiter, "$(filedir)$(filename)_mirror.txt")
+    networkfile = "$(filedir)$(filename)_mirror.txt"
+  end
   if sizeMB > 0
     # kscbignet algo
     qTest, baf, k, firstNode, lastNode, trainSubset, numFiles, fileWeighted = @time kscbignet(networkfile, filedir, filename, delimiter, sizeMB; fraction=0.15, method="furs", decomp="eigs", minK=mink, maxK=maxk, convertF=false)
