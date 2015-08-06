@@ -254,6 +254,8 @@ end
 Create an undirected network file with duplicate entries from the original network file
 """
 function createMirrored(dsvFile::String, delim::Char, newFile::String)
+  println("Creating mirrored network file")
+  tic()
   # read in dsvfile as stream
   fstream = open(dsvFile)
   # write to newfile as stream
@@ -275,11 +277,13 @@ function createMirrored(dsvFile::String, delim::Char, newFile::String)
         node = int(sline[1])
         neighbour = int(sline[2])
         weight = float(sline[3])
-        write(nstream, line)
+        write(nstream, "$(node)$(delim)$(neighbour)$(delim)$(weight)\n")
         write(nstream, "$(neighbour)$(delim)$(node)$(delim)$(weight)\n")
       end
     end
   end
   close(nstream)
   close(fstream)
+  timeMirrored = toq()
+  println("Done, time elapsed $(timeMirrored)s")
 end

@@ -53,7 +53,6 @@ function rerunKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::
   filedir = dirname(networkfile)
   filename = splitext(basename(networkfile))[1]
   if !undirected
-    createMirrored(networkfile, delimiter, "$(filedir)$(filename)_mirror.txt")
     networkfile = "$(filedir)$(filename)_mirror.txt"
   end
   if sizeMB > 0
