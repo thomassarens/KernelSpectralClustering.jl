@@ -10,7 +10,7 @@ include("KSCbignet.jl")
 
 export runKSCnetwork, rerunKSCnetwork
 export kscnet, kscbignet
-export coverage, modularity, modularityApprox
+export coverage, modularity, modularityApprox, modularityApprox2
 export convertDSVNet, createMirrored
 
 function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::Int; sizeMB=4000::Int, eval=false::Bool)

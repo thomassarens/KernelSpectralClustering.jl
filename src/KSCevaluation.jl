@@ -83,6 +83,57 @@ end
 
 function modularityApprox(fileCount::Int, k::Int, weighted::Int)
   println("Modularity metric:")
+  clusterResult = fill(0.0, k, 2)
+  # total sum of weights of all edges in network
+  edgesSum = @parallel (+) for j in 1:fileCount
+    sum(fileData[j][2])
+  end
+  @inbounds for i in 1:k
+    println("Cluster $(i)")
+    tic()
+    # nodes belonging to cluster i
+    clusterNodes = qData[(qData[:,2] .== i), 1]
+    println("Cluster size $(length(clusterNodes))")
+    clusterValues = @parallel (.+) for node in clusterNodes
+      clusterAssoc = 0.0
+      clusterDeg = 0.0
+      @inbounds for j in 1:fileCount
+        indexNode = findfirst(fileData[j][1], node)
+        if indexNode != 0
+          # degree of new node neighbours
+          # if unweighted
+          if weighted == 0
+            clusterDeg += float(length(fileData[j][3][:, indexNode]))
+          else
+            clusterDeg += sum(fileData[j][4][:, indexNode])
+          end
+          # degree of new node cluster neighbours
+          clusterNeighbours = find(x -> x in clusterNodes, fileData[j][3][:, indexNode])
+          if length(clusterNeighbours) != 0
+            # if unweighted
+            if weighted == 0
+              clusterAssoc += float(length(clusterNeighbours))
+            else
+              clusterAssoc += sum(fileData[j][4][:, indexNode][clusterNeighbours])
+            end
+          end
+        end
+      end
+      # end parallel loop
+      [clusterAssoc, clusterDeg]
+    end
+    clusterResult[i, :] = clusterValues
+    toc()
+  end
+  Q = 0.0
+  @inbounds for i in 1:k
+    Q += clusterResult[i, 1]/edgesSum - (clusterResult[i, 2]/edgesSum)^2
+  end
+  return Q
+end
+
+function modularityApprox2(fileCount::Int, k::Int, weighted::Int)
+  println("Modularity metric:")
   # total sum of weights of all edges in network
   edgesSum = @parallel (+) for j in 1:fileCount
     sum(fileData[j][2])
