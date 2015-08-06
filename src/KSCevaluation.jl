@@ -21,6 +21,19 @@ function coverage(fileCount::Int, subset::Array{Int}, totalN::Int)
   return C
 end
 
+function coverageApprox(fileCount::Int, subset::Array{Int}, totalN::Int)
+  reachableNeighbours = Int[]
+  for j in 1:fileCount
+    subsetIndices = find(x -> x in subset, fileData[j][1])
+    subsetNeighbours = @parallel (vcat) for nodeIndex in subsetIndices
+      nodeNeighbours = unique(fileData[j][3][:, nodeIndex])
+    end
+    push!(reachableNeighbours, subsetNeighbours...)
+  end
+  C = length(unique(reachableNeighbours))/totalN
+  return C
+end
+
 """
 Clustering quality metrics
 """

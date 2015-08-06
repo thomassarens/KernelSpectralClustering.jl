@@ -29,16 +29,17 @@ function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::In
       metricsfile = open("$(filedir)/$(filename)/metricsKSC.txt", "w")
       # Coverage
       tic()
-      coverageM = coverage(numFiles, trainSubset, length(unique(qTest)))
+      totalNodes = length(unique(qTest))
+      coverageM = coverageApprox(numFiles, trainSubset, totalNodes)
       timeCoverage = toq()
       println("Coverage $(coverageM) finished, time elapsed $(timeCoverage)s")
-      write(metricsfile, "Coverage: value $(coverageM), time $(timeCoverage)s\n")
+      write(metricsfile, "Coverage: value $(coverageM) for ratio $(length(trainSubset)) / $(totalNodes), time $(timeCoverage)s\n")
       # Modularity
       tic()
       modularityM = modularityApprox(numFiles, k, fileWeighted)
       timeModularity = toq()
       println("Modularity $(modularityM) finished, time elapsed $(timeModularity)s")
-      write(metricsfile, "Modularity: value $(modularityM), time $(timeModularity)s\n")
+      write(metricsfile, "Modularity: value $(modularityM) for $(k) communities, time $(timeModularity)s\n")
       close(metricsfile)
     end
     return qTest, baf, k, firstNode, lastNode, trainSubset, numFiles, fileWeighted
@@ -64,16 +65,17 @@ function rerunKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::
       metricsfile = open("$(filedir)/$(filename)/metricsKSC.txt", "w")
       # Coverage
       tic()
-      coverageM = coverage(numFiles, trainSubset, length(unique(qTest)))
+      totalNodes = length(unique(qTest))
+      coverageM = coverageApprox(numFiles, trainSubset, totalNodes)
       timeCoverage = toq()
-      println("Coverage $(coverageM) finished, time elapsed $(timeCoverage)s")
-      write(metricsfile, "Coverage: value $(coverageM), time $(timeCoverage)s\n")
+      println("Coverage $(coverageM) finished ratio $(length(trainSubset)) / $(totalNodes), time elapsed $(timeCoverage)s")
+      write(metricsfile, "Coverage: value $(coverageM) for ratio $(length(trainSubset)) / $(totalNodes), time $(timeCoverage)s\n")
       # Modularity
       tic()
       modularityM = modularityApprox(numFiles, k, fileWeighted)
       timeModularity = toq()
       println("Modularity $(modularityM) finished, time elapsed $(timeModularity)s")
-      write(metricsfile, "Modularity: value $(modularityM), time $(timeModularity)s\n")
+      write(metricsfile, "Modularity: value $(modularityM) for $(k) communities, time $(timeModularity)s\n")
       close(metricsfile)
     end
     return qTest, baf, k, firstNode, lastNode, trainSubset, numFiles, fileWeighted
