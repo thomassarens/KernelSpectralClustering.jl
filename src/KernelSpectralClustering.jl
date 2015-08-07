@@ -30,7 +30,7 @@ function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::In
       # Coverage
       tic()
       totalNodes = length(unique(qTest))
-      coverageM = coverageApprox(numFiles, trainSubset, totalNodes)
+      coverageM = coverage(numFiles, trainSubset, totalNodes)
       timeCoverage = toq()
       println("Coverage $(coverageM) finished, time elapsed $(timeCoverage)s")
       write(metricsfile, "Coverage: value $(coverageM) for ratio $(length(trainSubset)) / $(totalNodes), time $(timeCoverage)s\n")
@@ -66,7 +66,7 @@ function rerunKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::
       # Coverage
       tic()
       totalNodes = length(unique(qTest))
-      coverageM = coverageApprox(numFiles, trainSubset, totalNodes)
+      coverageM = coverage(numFiles, trainSubset, totalNodes)
       timeCoverage = toq()
       println("Coverage $(coverageM) finished ratio $(length(trainSubset)) / $(totalNodes), time elapsed $(timeCoverage)s")
       write(metricsfile, "Coverage: value $(coverageM) for ratio $(length(trainSubset)) / $(totalNodes), time $(timeCoverage)s\n")

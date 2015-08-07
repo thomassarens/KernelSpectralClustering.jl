@@ -2,6 +2,7 @@
 Subset quality metrics
 """
 function coverage(fileCount::Int, subset::Array{Int}, totalN::Int)
+  println("Coverage metric:")
   reachableNeighbours = @parallel (vcat) for i in subset
     tempNeighbours = Array(Array{Int},0)
     for j in 1:fileCount
@@ -22,8 +23,12 @@ function coverage(fileCount::Int, subset::Array{Int}, totalN::Int)
 end
 
 function coverageApprox(fileCount::Int, subset::Array{Int}, totalN::Int)
+  println("Coverage metric:")
+  # TODO use hash to fixed number fo buckets in bitarray
+  #=
   reachableNeighbours = Int[]
-  for j in 1:fileCount
+  @inbounds for j in 1:fileCount
+    println("File $(j)")
     subsetIndices = find(x -> x in subset, fileData[j][1])
     subsetNeighbours = @parallel (vcat) for nodeIndex in subsetIndices
       nodeNeighbours = unique(fileData[j][3][:, nodeIndex])
@@ -32,6 +37,7 @@ function coverageApprox(fileCount::Int, subset::Array{Int}, totalN::Int)
   end
   C = length(unique(reachableNeighbours))/totalN
   return C
+  =#
 end
 
 """
