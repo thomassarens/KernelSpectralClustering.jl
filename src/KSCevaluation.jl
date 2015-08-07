@@ -22,22 +22,30 @@ function coverage(fileCount::Int, subset::Array{Int}, totalN::Int)
   return C
 end
 
-function coverageApprox(fileCount::Int, subset::Array{Int}, totalN::Int)
+function coverageApprox(fileCount::Int, subset::Array{Int}, minN::Int, maxN::Int)
   println("Coverage metric:")
-  # TODO use hash to fixed number fo buckets in bitarray
-  #=
-  reachableNeighbours = Int[]
+  totalNodes = maxN-minN+1
+  reachableNeighbours = 0
+  # BitArray to keep track of unique set of neighbours
+  foundNeighbours = falses(totalNodes)
   @inbounds for j in 1:fileCount
     println("File $(j)")
-    subsetIndices = find(x -> x in subset, fileData[j][1])
-    subsetNeighbours = @parallel (vcat) for nodeIndex in subsetIndices
-      nodeNeighbours = unique(fileData[j][3][:, nodeIndex])
+    subsetIndices = find(x -> x in subset, fileData[j][1])'
+    @inbounds for nodeIndex in subsetIndices
+      nodeNeighbours = fileData[j][3][:, nodeIndex]
+      @inbounds for node in nodeNeighbours
+        if node == -1
+          break
+        end
+        if !foundNeighbours[node-minN+1]
+          reachableNeighbours += 1
+          foundNeighbours[node-minN+1] = true
+        end
+      end
     end
-    push!(reachableNeighbours, subsetNeighbours...)
   end
-  C = length(unique(reachableNeighbours))/totalN
-  return C
-  =#
+  C = reachableNeighbours / totalNodes
+  return C, totalNodes
 end
 
 """

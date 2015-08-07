@@ -10,7 +10,7 @@ include("KSCbignet.jl")
 
 export runKSCnetwork, rerunKSCnetwork
 export kscnet, kscbignet
-export coverage, modularity, modularityApprox
+export coverage, coverageApprox, modularity, modularityApprox
 export convertDSVNet, createMirrored
 
 function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::Int; sizeMB=4000::Int, undirected=true::Bool, eval=false::Bool)
@@ -29,8 +29,7 @@ function runKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::In
       metricsfile = open("$(filedir)/$(filename)/metricsKSC.txt", "w")
       # Coverage
       tic()
-      totalNodes = length(unique(qTest))
-      coverageM = coverage(numFiles, trainSubset, totalNodes)
+      coverageM, totalNodes = coverageApprox(numFiles, trainSubset, firstNode, lastNode)
       timeCoverage = toq()
       println("Coverage $(coverageM) finished, time elapsed $(timeCoverage)s")
       write(metricsfile, "Coverage: value $(coverageM) for ratio $(length(trainSubset)) / $(totalNodes), time $(timeCoverage)s\n")
@@ -65,8 +64,7 @@ function rerunKSCnetwork(networkfile::String, delimiter::Char, mink::Int, maxk::
       metricsfile = open("$(filedir)/$(filename)/metricsKSC.txt", "w")
       # Coverage
       tic()
-      totalNodes = length(unique(qTest))
-      coverageM = coverage(numFiles, trainSubset, totalNodes)
+      coverageM, totalNodes = coverageApprox(numFiles, trainSubset, firstNode, lastNode)
       timeCoverage = toq()
       println("Coverage $(coverageM) finished ratio $(length(trainSubset)) / $(totalNodes), time elapsed $(timeCoverage)s")
       write(metricsfile, "Coverage: value $(coverageM) for ratio $(length(trainSubset)) / $(totalNodes), time $(timeCoverage)s\n")
