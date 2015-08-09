@@ -118,6 +118,8 @@ function modularityApprox(fileCount::Int, k::Int, weighted::Int)
     println("Cluster size $(length(clusterNodes))")
     clusterDeg, clusterAssoc = @parallel (.+) for j in 1:fileCount
       tic()
+      fileDeg = 0.0
+      fileAssoc = 0.0
       fileNodes = find(x -> x in clusterNodes, fileData[j][1])
       fileNeighbours = fileData[j][3][:, fileNodes]
       # sum of degree of cluster nodes' neighbours

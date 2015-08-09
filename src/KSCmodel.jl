@@ -88,7 +88,7 @@ function modelTestU(fileCount::Int, trainNorm::SparseMatrixCSC{Float64, Int}, mi
     mean(fileData[i][2])
   end
   # determine number of nodes tested simultaneously
-  stepSize = min(int(floor(maxMB*1000000*0.5 / (16*nprocs()*avgLength))), int(ceil((endNode-minN+1)/nprocs())))
+  stepSize = min(int(floor(maxMB*1000000 / (16*3*nprocs()*avgLength))), int(ceil((endNode-minN+1)/nprocs())))
   println("Step size $(stepSize)")
   countN = @parallel (+) for n in colon(minN,stepSize,endNode+stepSize)
     if n > endNode
