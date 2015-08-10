@@ -88,7 +88,7 @@ function modelTestU(fileCount::Int, trainNorm::SparseMatrixCSC{Float64, Int}, mi
     mean(fileData[i][2])
   end
   # determine number of nodes tested simultaneously
-  stepSize = min(int(floor(maxMB*1000000 / (16*3*nprocs()*avgLength))), int(ceil((endNode-minN+1)/nprocs())))
+  stepSize = min(int(floor(maxMB*1000000 / (16*fileCount*nprocs()*avgLength))), int(ceil((endNode-minN+1)/nprocs())))
   println("Step size $(stepSize)")
   countN = @parallel (+) for n in colon(minN,stepSize,endNode+stepSize)
     if n > endNode
@@ -101,6 +101,7 @@ function modelTestU(fileCount::Int, trainNorm::SparseMatrixCSC{Float64, Int}, mi
     end
     testNodes = Array(Int,0)
     testNeighbours = Array(Int,0)
+    println("Starting range $(n)")
     @inbounds for fileIndex in 1:fileCount
       foundNodes = 0
       @inbounds for index in 1:length(fileData[fileIndex][1])
@@ -119,6 +120,7 @@ function modelTestU(fileCount::Int, trainNorm::SparseMatrixCSC{Float64, Int}, mi
         end
       end
     end
+    println("Range $(n) collecting done")
     permIndices = unique(testNodes)
     testData = fill(-1, length(nodes), 2)
     if length(permIndices) != 0
@@ -142,6 +144,7 @@ function modelTestU(fileCount::Int, trainNorm::SparseMatrixCSC{Float64, Int}, mi
         end
       end
     end
+    println("Range $(n) storing qData")
     qData[nodes .- (minN-1), :] = testData
     length(permIndices)
   end
