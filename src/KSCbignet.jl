@@ -144,7 +144,7 @@ function kscbignet(network_file::String, file_dir::String, file_name::String, de
   println("Test phase")
   tic()
   if fileWeighted == 0
-    modelTestU(fileCount, trainNorm, firstNode, lastNode, α, β, CB, kBAF, maxMB)
+    modelTestU(fileCount, trainNorm, firstNode, lastNode, α, β, CB, kBAF, maxMB; limitN=100000)
   else
     modelTestW(fileCount, trainNorm, firstNode, lastNode, α, β, CB, kBAF, maxMB)
   end
