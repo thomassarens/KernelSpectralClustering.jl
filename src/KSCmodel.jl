@@ -92,61 +92,62 @@ function modelTestU(fileCount::Int, trainNorm::SparseMatrixCSC{Float64, Int}, mi
   println("Step size $(stepSize)")
   countN = @parallel (+) for n in colon(minN,stepSize,endNode+stepSize)
     if n > endNode
-      return 0
-    end
-    if n+stepSize > endNode
-      nodes = [n:endNode]
+      0
     else
-      nodes = [n:n+stepSize-1]
-    end
-    testNodes = Array(Int,0)
-    testNeighbours = Array(Int,0)
-    println("Starting range $(n)")
-    @inbounds for fileIndex in 1:fileCount
-      foundNodes = 0
-      @inbounds for index in 1:length(fileData[fileIndex][1])
-        if fileData[fileIndex][1][index] in nodes
-          neighbours = fileData[fileIndex][3][:, index]
-          foundEnd = findfirst(neighbours, -1)
-          if foundEnd != 0
-            deleteat!(neighbours, foundEnd:length(neighbours))
+      if n+stepSize > endNode
+        nodes = [n:endNode]
+      else
+        nodes = [n:n+stepSize-1]
+      end
+      testNodes = Array(Int,0)
+      testNeighbours = Array(Int,0)
+      println("Starting range $(n)")
+      @inbounds for fileIndex in 1:fileCount
+        foundNodes = 0
+        @inbounds for index in 1:length(fileData[fileIndex][1])
+          if fileData[fileIndex][1][index] in nodes
+            neighbours = fileData[fileIndex][3][:, index]
+            foundEnd = findfirst(neighbours, -1)
+            if foundEnd != 0
+              deleteat!(neighbours, foundEnd:length(neighbours))
+            end
+            foundNodes += 1
+            append!(testNodes, fill(fileData[fileIndex][1][index], length(neighbours)))
+            append!(testNeighbours, neighbours)
           end
-          foundNodes += 1
-          append!(testNodes, fill(fileData[fileIndex][1][index], length(neighbours)))
-          append!(testNeighbours, neighbours)
-        end
-        if foundNodes == length(nodes)
-          break
+          if foundNodes == length(nodes)
+            break
+          end
         end
       end
+      println("Range $(n) collecting done")
+      permIndices = unique(testNodes)
+      testData = fill(-1, length(nodes), 2)
+      if length(permIndices) != 0
+        # avoid zero index in neighbours
+        if minN == 0
+          testNeighbours[testNeighbours .== 0] = lastNeighbour
+        end
+        @inbounds for i in 1:length(testNodes)
+          testNodes[i] = findfirst(permIndices, testNodes[i])
+        end
+        # kernel matrix single test node
+        testSparse = sparse(testNodes, testNeighbours, fill(1.0, length(testNodes)), length(permIndices), lastNeighbour, (w1,w2)->w1)
+        kernelTest = testSparse*trainNorm';
+        eTest = kernelTest * α + repeat(β, outer = [length(permIndices), 1])
+        qTest = membership(eTest[:,1:kBAF-1], CB[kBAF-1])
+        # store node and its cluster membership
+        @inbounds for i in 1:length(permIndices)
+          foundPerm = findfirst(nodes, permIndices[i])
+          if foundPerm != 0
+            testData[foundPerm, :] = [permIndices[i], qTest[i]]
+          end
+        end
+      end
+      println("Range $(n) storing qData")
+      qData[nodes .- (minN-1), :] = testData
+      length(permIndices)
     end
-    println("Range $(n) collecting done")
-    permIndices = unique(testNodes)
-    testData = fill(-1, length(nodes), 2)
-    if length(permIndices) != 0
-      # avoid zero index in neighbours
-      if minN == 0
-        testNeighbours[testNeighbours .== 0] = lastNeighbour
-      end
-      @inbounds for i in 1:length(testNodes)
-        testNodes[i] = findfirst(permIndices, testNodes[i])
-      end
-      # kernel matrix single test node
-      testSparse = sparse(testNodes, testNeighbours, fill(1.0, length(testNodes)), length(permIndices), lastNeighbour, (w1,w2)->w1)
-      kernelTest = testSparse*trainNorm';
-      eTest = kernelTest * α + repeat(β, outer = [length(permIndices), 1])
-      qTest = membership(eTest[:,1:kBAF-1], CB[kBAF-1])
-      # store node and its cluster membership
-      @inbounds for i in 1:length(permIndices)
-        foundPerm = findfirst(nodes, permIndices[i])
-        if foundPerm != 0
-          testData[foundPerm, :] = [permIndices[i], qTest[i]]
-        end
-      end
-    end
-    println("Range $(n) storing qData")
-    qData[nodes .- (minN-1), :] = testData
-    length(permIndices)
   end
   println("Nodes tested $(countN)")
 end
@@ -173,62 +174,63 @@ function modelTestW(fileCount::Int, trainNorm::SparseMatrixCSC{Float64, Int}, mi
   println("Step size $(stepSize)")
   countN = @parallel (+) for n in colon(minN,stepSize,endNode+stepSize)
     if n > endNode
-      return 0
-    end
-    if n+stepSize > endNode
-      nodes = [n:endNode]
+      0
     else
-      nodes = [n:n+stepSize-1]
-    end
-    testNodes = Array(Int,0)
-    testNeighbours = Array(Int,0)
-    testWeights = Array(Float64,0)
-    @inbounds for fileIndex in 1:fileCount
-      foundNodes = 0
-      @inbounds for index in 1:length(fileData[fileIndex][1])
-        if fileData[fileIndex][1][index] in nodes
-          neighbours = fileData[fileIndex][3][:, index]
-          weights = fileData[fileIndex][4][:, index]
-          foundEnd = findfirst(neighbours, -1)
-          if foundEnd != 0
-            deleteat!(neighbours, foundEnd:length(neighbours))
-            deleteat!(weights, foundEnd:length(weights))
+      if n+stepSize > endNode
+        nodes = [n:endNode]
+      else
+        nodes = [n:n+stepSize-1]
+      end
+      testNodes = Array(Int,0)
+      testNeighbours = Array(Int,0)
+      testWeights = Array(Float64,0)
+      @inbounds for fileIndex in 1:fileCount
+        foundNodes = 0
+        @inbounds for index in 1:length(fileData[fileIndex][1])
+          if fileData[fileIndex][1][index] in nodes
+            neighbours = fileData[fileIndex][3][:, index]
+            weights = fileData[fileIndex][4][:, index]
+            foundEnd = findfirst(neighbours, -1)
+            if foundEnd != 0
+              deleteat!(neighbours, foundEnd:length(neighbours))
+              deleteat!(weights, foundEnd:length(weights))
+            end
+            foundNodes += 1
+            append!(testNodes, fill(fileData[fileIndex][1][index], length(neighbours)))
+            append!(testNeighbours, neighbours)
+            append!(testWeights, weights)
           end
-          foundNodes += 1
-          append!(testNodes, fill(fileData[fileIndex][1][index], length(neighbours)))
-          append!(testNeighbours, neighbours)
-          append!(testWeights, weights)
-        end
-        if foundNodes == length(nodes)
-          break
+          if foundNodes == length(nodes)
+            break
+          end
         end
       end
+      permIndices = unique(testNodes)
+      testData = fill(-1, length(nodes), 2)
+      if length(permIndices) != 0
+        # avoid zero index in neighbours
+        if minN == 0
+          testNeighbours[testNeighbours .== 0] = lastNeighbour
+        end
+        @inbounds for i in 1:length(testNodes)
+          testNodes[i] = findfirst(permIndices, testNodes[i])
+        end
+        # kernel matrix single test node
+        testSparse = sparse(testNodes, testNeighbours, testWeights, length(permIndices), lastNeighbour, (w1,w2)->w1)
+        kernelTest = testSparse*trainNorm';
+        eTest = kernelTest * α + repeat(β, outer = [length(permIndices), 1])
+        qTest = membership(eTest[:,1:kBAF-1], CB[kBAF-1])
+        # store node and its cluster membership
+        @inbounds for i in 1:length(permIndices)
+          foundPerm = findfirst(nodes, permIndices[i])
+          if foundPerm != 0
+            testData[foundPerm, :] = [permIndices[i], qTest[i]]
+          end
+        end
+      end
+      qData[nodes .- (minN-1), :] = testData
+      length(permIndices)
     end
-    permIndices = unique(testNodes)
-    testData = fill(-1, length(nodes), 2)
-    if length(permIndices) != 0
-      # avoid zero index in neighbours
-      if minN == 0
-        testNeighbours[testNeighbours .== 0] = lastNeighbour
-      end
-      @inbounds for i in 1:length(testNodes)
-        testNodes[i] = findfirst(permIndices, testNodes[i])
-      end
-      # kernel matrix single test node
-      testSparse = sparse(testNodes, testNeighbours, testWeights, length(permIndices), lastNeighbour, (w1,w2)->w1)
-      kernelTest = testSparse*trainNorm';
-      eTest = kernelTest * α + repeat(β, outer = [length(permIndices), 1])
-      qTest = membership(eTest[:,1:kBAF-1], CB[kBAF-1])
-      # store node and its cluster membership
-      @inbounds for i in 1:length(permIndices)
-        foundPerm = findfirst(nodes, permIndices[i])
-        if foundPerm != 0
-          testData[foundPerm, :] = [permIndices[i], qTest[i]]
-        end
-      end
-    end
-    qData[nodes .- (minN-1), :] = testData
-    length(permIndices)
   end
   println("Nodes tested $(countN)")
 end
