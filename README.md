@@ -11,7 +11,7 @@ Pkg.clone("git://github.com/thomassarens/KernelSpectralClustering.jl.git")
 The __KernelSpectralClustering__ module is designed to apply community detection to un-/directed networks formated as textfiles with 2 (unweighted) or 3 (weighted) delimiter sparated values.
 
 ## Usage
-First open the Julia enviroment with a certain number of available processes with 'julia -p 24' (or do 'addprocs(23)' within julia), then specify the used package:
+First open the Julia enviroment with a certain number of available processes with _julia -p 24_ (or do _addprocs(23)_ within julia), then specify the used package:
 ```julia
 using KernelSpectralClustering
 ```
@@ -39,7 +39,7 @@ kscbignet(network_file::String, file_dir::String, file_name::String, delimiter::
 Additional keyword arguments can be supplied:
 + fraction=0.15::Float64 -> fraction of network nodes to ne used in subset
 + method="furs"::String -> subset selection method, __randrs__ is a faster, less optimal alternative to __furs__
-+ decomp="eigs"::String -> kernel matrix eigen-decomposition method, __eig__ and __svd__ is planned in future implementation
++ decomp="eigs"::String -> kernel matrix eigen-decomposition method, __eigs__ for approximate, __eig__ for full and __svd__ is planned in future implementation
 + minK=2::Int -> minimum amount of clusters
 + maxK=100::Int -> maximum amount of clusters
 + convertF=true::Bool -> set to false to skip the dataset transdormation step
